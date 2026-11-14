@@ -2,7 +2,8 @@
 
 Keeps videos and music playing when you switch tabs — a Chromium extension.
 
-![noPause icon](icons/icon128.png)
+<img width="278" height="275" alt="PepperSnap_257" src="https://github.com/user-attachments/assets/818d5f52-5e2a-43a6-bd7d-21a23aed5e70" />
+
 
 Switch to another tab and most players pause themselves. noPause refuses those pauses: your video or music keeps going while you read something else, and the tab you came from behaves normally the moment it is visible and focused again.
 
