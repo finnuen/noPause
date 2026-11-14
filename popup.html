@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <h1>noPause</h1>
+
+  <div class="row">
+    <span>Enabled</span>
+    <label class="switch">
+      <input type="checkbox" id="enabled">
+      <span class="slider"></span>
+    </label>
+  </div>
+
+  <div class="row">
+    <span>Site lists</span>
+    <select id="mode">
+      <option value="blacklist">Blacklist</option>
+      <option value="whitelist">Whitelist</option>
+    </select>
+  </div>
+
+  <input id="addInput" type="text" placeholder="Add a website..." spellcheck="false">
+  <button id="siteBtn"></button>
+  <p class="hint" id="hint"></p>
+
+  <div id="siteList" hidden></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
