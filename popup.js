@@ -55,7 +55,7 @@ async function init() {
 
   if (!siteHost) {
     siteBtn.disabled = true;
-    siteBtn.textContent = 'Site button';
+    siteBtn.textContent = 'No website detected';
     hintEl.textContent = 'Open a website to manage it.';
   } else {
     updateSiteButton(settings);

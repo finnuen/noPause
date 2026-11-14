@@ -28,7 +28,10 @@
   const origSetAttr = proto.setAttribute;
   const origRemoveAttr = proto.removeAttribute;
   const srcDesc = Object.getOwnPropertyDescriptor(proto, 'src');
+  const srcObjectDesc = Object.getOwnPropertyDescriptor(proto, 'srcObject');
   const mutedDesc = Object.getOwnPropertyDescriptor(proto, 'muted');
+  const webkitHiddenDesc = Object.getOwnPropertyDescriptor(Document.prototype, 'webkitHidden');
+  const webkitVisDesc = Object.getOwnPropertyDescriptor(Document.prototype, 'webkitVisibilityState');
 
   const state = { ready: false, enabled: true, siteActive: true };
 
@@ -40,8 +43,16 @@
   const isBlocked = () => settingsActive() &&
     (nativeHidden.call(document) || !nativeHasFocus.call(document));
 
-  // Elements that should be playing right now.
+  // Elements that should be playing right now, and how many times resuming
+  // them failed (capped so a rejecting play() cannot loop forever).
   const shouldPlay = new WeakSet();
+  const retries = new WeakMap();
+
+  function replay(m) {
+    const n = retries.get(m) || 0;
+    if (n >= 5) return;
+    m.play().then(() => retries.delete(m)).catch(() => retries.set(m, n + 1));
+  }
 
   // True when a source change / load / mute would silently kill playback.
   const wouldKillPlayback = (m) =>
@@ -57,14 +68,16 @@
     return origPause.call(this);
   };
 
-  // 2. If anything pauses a playing element by any other route, resume it.
+  // 2. If anything pauses a playing element by any other route, resume it,
+  //    and hide the pause event from the page so its UI never flickers.
   //    (capture listener on document also hears events from closed shadow DOM)
   document.addEventListener('pause', (e) => {
     const m = e.target;
     if (!(m instanceof HTMLMediaElement)) return;
     if (isBlocked() && !m.ended) {
+      e.stopImmediatePropagation();
       shouldPlay.add(m);
-      m.play().catch(() => {});
+      replay(m);
     } else if (!isBlocked()) {
       shouldPlay.delete(m);
     }
@@ -104,7 +117,7 @@
     collectMedia(document, list);
     for (const m of list) {
       if (shouldPlay.has(m) && m.paused && !m.ended && (m.src || m.currentSrc)) {
-        m.play().catch(() => {});
+        replay(m);
       }
     }
   }, 250);
@@ -133,6 +146,18 @@
       set: function (v) {
         if (wouldKillPlayback(this)) return;
         srcDesc.set.call(this, v);
+      },
+    });
+  }
+
+  if (srcObjectDesc && srcObjectDesc.set) {
+    Object.defineProperty(proto, 'srcObject', {
+      configurable: true,
+      enumerable: srcObjectDesc.enumerable,
+      get: srcObjectDesc.get,
+      set: function (v) {
+        if (wouldKillPlayback(this)) return;
+        srcObjectDesc.set.call(this, v);
       },
     });
   }
@@ -176,11 +201,23 @@
       Object.defineProperty(document, 'hasFocus', {
         configurable: true, value: () => true,
       });
+      if (webkitHiddenDesc) {
+        Object.defineProperty(document, 'webkitHidden', {
+          configurable: true, get: () => false,
+        });
+      }
+      if (webkitVisDesc) {
+        Object.defineProperty(document, 'webkitVisibilityState', {
+          configurable: true, get: () => 'visible',
+        });
+      }
       spoofed = true;
     } else if (!settingsActive() && spoofed) {
       delete document.hidden;
       delete document.visibilityState;
       delete document.hasFocus;
+      delete document.webkitHidden;
+      delete document.webkitVisibilityState;
       spoofed = false;
     }
   }
