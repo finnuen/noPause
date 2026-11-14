@@ -48,3 +48,7 @@ noPause collects nothing. The only data it stores is your enable/disable state a
 
 - Chromium-based browser: Chrome, Edge, Brave, and so on
 - Manifest V3
+
+## License
+
+Apache License 2.0 — see [LICENSE](LICENSE).
